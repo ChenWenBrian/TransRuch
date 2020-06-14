@@ -111,9 +111,9 @@
                 t.input("ll ~\n");
                 let curTime = await getPrintDate();
                 if (curTime && curTime != lastTime && curTime.indexOf(new Date().getUTCFullYear().toString()) > -1) {
-                    console.info(count + ". Session keep alived at: " + (lastTime = curTime));
+                    console.info(`${count}. Session keep alived at: ${lastTime = curTime}`);
                 } else {
-                    console.info(count + ". Session terminated at: " + lastTime);
+                    console.error(`${count}. Session terminated at: ${curTime}, last check is: ${lastTime}`);
                     await beep(10, 200);
                     await beep(30, 100);
                     window.clearInterval(timerId);
