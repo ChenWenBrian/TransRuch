@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aliyun Shell Helper
 // @namespace    https://shell.aliyun.com/
-// @version      0.4
+// @version      0.5
 // @description  aliyun cloud shell socks proxy in your own environment!
 // @author       Brian Chen
 // @match        https://shell.aliyun.com/term?*
@@ -14,6 +14,16 @@
 
 (function () {
     //configuration section
+    MonkeyConfig.prototype.getConfig = function(){
+        let args = Array.prototype.slice.call(arguments),
+            config={};
+        for (var i = 0; i < args.length; i++) {
+            config[args[i]] = cfg.get(args[i]);
+        }
+
+        return config;
+    }
+    
     var options = {
         title: 'Ali-Shell Configuration',
         menuCommand: true,
@@ -25,6 +35,14 @@
             port: {
                 type: 'number',
                 default: 7000
+            },
+            keep_alive: {
+                type: 'number',
+                default: 10000  //10 seconds
+            },
+            enable_log: {
+                type: 'checkbox',
+                default: false
             }
         }
     },
@@ -32,11 +50,11 @@
     if(cfg.get('token') === options.params.token.default){
         cfg.open();
     }
-    let port = cfg.get("port"),
-        token = cfg.get("token");
+
+    let config = cfg.getConfig("port", "token", "keep_alive", "enable_log");
 
     //injected function
-    let fn = function (t, port, token) {
+    let fn = function (t, config) {
         console.info(Date());
         console.info("Helper started at: " + window.location);
         let lastTime = "";
@@ -50,7 +68,7 @@
                 //get time from shell after xxx mil-seconds
                 lastTime = await getPrintDate(800);
                 initProxy();
-                keepAlive(10000); //10 seconds
+                keepAlive(config.keep_alive); //10 seconds
                 await beep(5);
                 console.info("Proxy started at: " + lastTime);
             } else {
@@ -115,11 +133,13 @@
 && chmod +x fc \
 && cat << EOF > frpc.ini
 [common]
+log_file = ${config.enable_log ? "client.log" : "/dev/null"}
+log_level = info
 login_fail_exit = false
 server_addr = $ip
-server_port = ${port}
+server_port = ${config.port}
 tcp_mux = true
-token = ${token}
+token = ${config.token}
 tls_enable = true
 
 [aliyun-socks5]
@@ -147,6 +167,6 @@ if ! pidof fc > /dev/null ; then (./fc & ) ;fi \
     }
 
     appendScript("//pv.sohu.com/cityjson?ie=utf-8");
-    appendScript(null, `(${fn.toString()})(window.t, ${port}, "${token}")`);
+    appendScript(null, `(${fn.toString()})(window.t, ${JSON.stringify(config)})`);
 
 })();
