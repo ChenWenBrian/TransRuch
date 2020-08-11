@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aliyun Shell Helper
 // @namespace    https://shell.aliyun.com/
-// @version      0.5
+// @version      0.6
 // @description  aliyun cloud shell socks proxy in your own environment!
 // @author       Brian Chen
 // @match        https://shell.aliyun.com/term?*
@@ -14,40 +14,40 @@
 
 (function () {
     //configuration section
-    MonkeyConfig.prototype.getConfig = function(){
+    MonkeyConfig.prototype.getConfig = function () {
         let args = Array.prototype.slice.call(arguments),
-            config={};
+            config = {};
         for (var i = 0; i < args.length; i++) {
             config[args[i]] = cfg.get(args[i]);
         }
 
         return config;
     }
-    
+
     var options = {
-        title: 'Ali-Shell Configuration',
-        menuCommand: true,
-        params: {
-            token: {
-                type: 'text',
-                default: 'Input your token here'
-            },
-            port: {
-                type: 'number',
-                default: 7000
-            },
-            keep_alive: {
-                type: 'number',
-                default: 10000  //10 seconds
-            },
-            enable_log: {
-                type: 'checkbox',
-                default: false
+            title: 'Ali-Shell Configuration',
+            menuCommand: true,
+            params: {
+                token: {
+                    type: 'text',
+                    default: 'Input your token here'
+                },
+                port: {
+                    type: 'number',
+                    default: 7000
+                },
+                keep_alive: {
+                    type: 'number',
+                    default: 10000 //10 seconds
+                },
+                enable_log: {
+                    type: 'checkbox',
+                    default: false
+                }
             }
-        }
-    },
-    cfg = new MonkeyConfig(options);
-    if(cfg.get('token') === options.params.token.default){
+        },
+        cfg = new MonkeyConfig(options);
+    if (cfg.get('token') === options.params.token.default) {
         cfg.open();
     }
 
@@ -58,6 +58,7 @@
         console.info(Date());
         console.info("Helper started at: " + window.location);
         let lastTime = "";
+        let loginUrl = "https://account.aliyun.com/login/login.htm?oauth_callback=";
 
         //timer to check if shell is ready for use
         let timerId = window.setInterval(async function () {
@@ -73,6 +74,9 @@
                 console.info("Proxy started at: " + lastTime);
             } else {
                 console.info("Session is not detected, waiting...");
+                if (isLoginTimeout()) {
+                    window.top.location.href = loginUrl + encodeURIComponent(window.top.location.href);
+                }
             }
         }, 500); //0.5s
 
@@ -89,6 +93,13 @@
             let lineNum = t.term.buffer.active.cursorY + (offset || 0);
             t.term.selectLines(lineNum, lineNum);
             return t.term.getSelection();
+        }
+
+        function isLoginTimeout() {
+            t.term.selectAll();
+            let text = t.term.getSelection().trim();
+            console.debug(text);
+            return text.indexOf("Disconnected. Login timeout") > -1;
         }
 
         function isLastLineContains(text) {
