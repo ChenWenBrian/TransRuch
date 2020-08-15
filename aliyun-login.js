@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aliyun Login Helper
 // @namespace    https://passport.aliyun.com/
-// @version      0.1
+// @version      0.2
 // @description  aliyun automatic login helper!
 // @author       Brian Chen
 // @match        https://passport.aliyun.com/mini_login.htm*
@@ -33,12 +33,17 @@
                     default: 'Input your username here'
                 },
                 password: {
-                    type: 'password',
+                    type: 'text',
                     default: ''
                 },
                 auto_fill: {
                     type: 'checkbox',
                     default: false
+                },
+                //force login after numbers of retry, at least 3 times and above
+                force_login_times: {
+                    type: 'number',
+                    default: 0
                 }
             }
         },
@@ -47,7 +52,7 @@
     //     cfg.open();
     // }
 
-    let config = cfg.getConfig("username", "password", "auto_fill");
+    let config = cfg.getConfig("username", "password", "auto_fill", "force_login_times");
 
     //injected function
     let fn = function (config) {
@@ -75,12 +80,16 @@
                 }
             } else {
                 console.info("Login form is not detected, waiting...");
+                if (config.force_login_times > 3 && count === config.force_login_times) {
+                    console.info(`Force login triggered after ${count} times of detection, login...`);
+                    node("#login-form button.fm-submit").click();
+                }
             }
             if (count++ > 100) {
                 window.clearInterval(timerId);
                 console.error("Max detection count reached, quit.");
             }
-        }, 500); //0.1s
+        }, 500); //0.5s
 
         function node(selector) {
             return document.querySelector(selector);
