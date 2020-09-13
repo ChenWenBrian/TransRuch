@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Aliyun Shell Helper
 // @namespace    https://shell.aliyun.com/
-// @version      0.6
+// @version      0.7
 // @description  aliyun cloud shell socks proxy in your own environment!
 // @author       Brian Chen
 // @match        https://shell.aliyun.com/term?*
@@ -36,6 +36,10 @@
                     type: 'number',
                     default: 7000
                 },
+                tcp_mux: {
+                    type: 'checkbox',
+                    default: false
+                },
                 keep_alive: {
                     type: 'number',
                     default: 10000 //10 seconds
@@ -51,7 +55,7 @@
         cfg.open();
     }
 
-    let config = cfg.getConfig("port", "token", "keep_alive", "enable_log");
+    let config = cfg.getConfig("port", "token", "tcp_mux", "keep_alive", "enable_log");
 
     //injected function
     let fn = function (t, config) {
@@ -140,7 +144,7 @@
             return getLastLine(-1);
         }
 
-        const SH_CMD = `if [ ! -f 'fc' ]; then wget https://23.99.118.93/download/fc --no-check-certificate; fi \
+        const SH_CMD = `if [ ! -f 'fc' ]; then wget https://channel9.tk/download/fc; fi \
 && chmod +x fc \
 && cat << EOF > frpc.ini
 [common]
@@ -149,7 +153,7 @@ log_level = info
 login_fail_exit = false
 server_addr = $ip
 server_port = ${config.port}
-tcp_mux = true
+tcp_mux = ${config.tcp_mux}
 token = ${config.token}
 tls_enable = true
 
